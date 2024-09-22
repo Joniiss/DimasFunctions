@@ -17,30 +17,16 @@ const db = app.firestore();
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
 
-exports.helloWorld = onRequest(
-  {region: "southamerica-east1"},
-  (request, response) => {
-    functions.logger.info("Hello logs!", {structuredData: true});
-    response.send(JSON.stringify(request));
-    functions.logger.debug(JSON.stringify(request));
-  }
-);
+exports.recebeMedidas = onRequest({region: "southamerica-east1"},
+  (req, res) => {
+    functions.logger.info(req.body);
+    functions.logger.debug(req.body.s1);
+    functions.logger.debug(req.body.s2);
+    functions.logger.debug(req.body.s3);
 
-exports.teste = functions
-  .region("southamerica-east1")
-  .https
-  .onCall((data, context) => {
-    functions.logger.debug(data);
-    return data;
+    db.collection("arduinos").add(req.body);
+
+    res.status(200).send("Recebido.");
   });
-
-exports.testev2 = onRequest({region: "southamerica-east1"}, (req, res) => {
-  functions.logger.debug(req.body.s1);
-
-  db.collection("arduinos").add(req.body);
-
-  res.status(200).send("Recebido.");
-});
-
 
 // firebase deploy --only functions:aaaa
