@@ -10,6 +10,8 @@
 import {onRequest} from "firebase-functions/v2/https";
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import {getAuth} from "firebase-admin/auth";
+import * as moment from "moment";
 
 const app = admin.initializeApp();
 const db = app.firestore();
@@ -20,13 +22,33 @@ const db = app.firestore();
 exports.recebeMedidas = onRequest({region: "southamerica-east1"},
   (req, res) => {
     functions.logger.info(req.body);
-    functions.logger.debug(req.body.s1);
-    functions.logger.debug(req.body.s2);
-    functions.logger.debug(req.body.s3);
 
-    db.collection("arduinos").add(req.body);
+    const medidas = {
+      hubId: req.body.hubId,
+      tempAr: req.body.tempAr,
+      tempSolo: req.body.tempSolo,
+      umAr: req.body.umAr,
+      umSolo: req.body.umSolo,
+      timestamp: moment().utcOffset(-3).format(),
+    };
+
+    db.collection("Dados").add(medidas);
 
     res.status(200).send("Recebido.");
+  });
+
+exports.novoUsuario = onRequest({region: "southamerica-east1"},
+  async (req, res) => {
+    const user = await getAuth().getUserByEmail(req.body.email);
+
+    const arduino = {
+      user: user.uid,
+      nome: req.body.nome,
+    };
+
+    const docId = await db.collection("Arduinos").add(arduino);
+
+    res.status(200).send(docId.id);
   });
 
 // firebase deploy --only functions:aaaa
